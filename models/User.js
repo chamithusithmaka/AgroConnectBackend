@@ -15,6 +15,12 @@ const UserSchema = new mongoose.Schema({
     required: [true, 'Full name is required'],
     trim: true
   },
+  phoneNumber: {
+    type: String,
+    required: [true, 'Phone number is required'],
+    unique: true,
+    match: [/^\+?[1-9]\d{1,14}$/, 'Please provide a valid phone number'] // Basic international phone validation
+  },
   password: {
     type: String,
     required: [true, 'Password is required'],
@@ -23,12 +29,15 @@ const UserSchema = new mongoose.Schema({
   },
   district: {
     type: String,
-    required: [true, 'District is required'],
-    trim: true
+    trim: true // Made optional
   },
   age: {
-    type: Number,
-    required: [true, 'Age is required']
+    type: Number // Made optional
+  },
+  userType: {
+    type: String,
+    enum: ['Farmer', 'Buyer', 'Supplier', 'Expert'],
+    default: 'Farmer'
   },
   role: {
     type: String,

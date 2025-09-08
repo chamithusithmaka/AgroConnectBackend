@@ -25,7 +25,7 @@ const router = express.Router();
 // @access  Private
 router.route('/')
   .get(getPosts)
-  .post(protect, createPost);
+  .post(createPost); // <-- Remove 'protect' middleware here
 
 // @route   GET http://localhost:5000/api/posts/:id
 // @desc    Get single post by ID

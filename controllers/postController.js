@@ -6,19 +6,31 @@ const User = require('../models/User');
 // @access  Private
 exports.createPost = async (req, res) => {
   try {
-    // Add user to req.body
-    req.body.user = req.user.id;
+    // Remove: req.body.user = req.user.id;
 
-    // Validate image exists
-    if (!req.body.image) {
+    // Validate required fields from Flutter page
+    const { heading, description, image, category, location } = req.body;
+
+    if (!heading || !description || !image) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide an image'
+        message: 'Please provide heading, description, and image'
       });
     }
 
+    // Build post object
+    const postData = {
+      heading,
+      description,
+      image,
+      // Add category and location if present
+      ...(category && { category }),
+      ...(location && { location }),
+      // Remove: user: req.user.id,
+    };
+
     // Create post
-    const post = await Post.create(req.body);
+    const post = await Post.create(postData);
 
     res.status(201).json({
       success: true,

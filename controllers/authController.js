@@ -7,14 +7,16 @@ const crypto = require('crypto');
 // @access  Public
 exports.register = async (req, res) => {
   try {
-    const { email, fullName, password, district, age } = req.body;
+    const { email, fullName, phoneNumber, password, userType } = req.body;
 
-    // Check if user already exists
-    const userExists = await User.findOne({ email });
+    // Check if user already exists (by email or phone)
+    const userExists = await User.findOne({
+      $or: [{ email }, { phoneNumber }]
+    });
     if (userExists) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Email already registered' 
+        message: 'Email or phone number already registered' 
       });
     }
 
@@ -22,9 +24,9 @@ exports.register = async (req, res) => {
     const user = await User.create({
       email,
       fullName,
+      phoneNumber,
       password,
-      district,
-      age
+      userType: userType || 'Farmer' // Default to 'Farmer' if not provided
     });
 
     sendTokenResponse(user, 201, res);
@@ -43,18 +45,24 @@ exports.register = async (req, res) => {
 // @access  Public
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { emailOrPhone, password } = req.body; // Renamed to match Flutter's "Email or Phone Number"
 
-    // Validate email & password
-    if (!email || !password) {
+    // Validate input
+    if (!emailOrPhone || !password) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Please provide email and password' 
+        message: 'Please provide email/phone and password' 
       });
     }
 
-    // Check for user
-    const user = await User.findOne({ email }).select('+password');
+    // Check for user by email or phone
+    const user = await User.findOne({
+      $or: [
+        { email: emailOrPhone },
+        { phoneNumber: emailOrPhone }
+      ]
+    }).select('+password');
+
     if (!user) {
       return res.status(401).json({ 
         success: false, 
@@ -194,6 +202,8 @@ exports.resetPassword = async (req, res) => {
         id: user._id,
         email: user.email,
         fullName: user.fullName,
+        phoneNumber: user.phoneNumber,
+        userType: user.userType,
         district: user.district,
         age: user.age,
         role: user.role
@@ -229,6 +239,8 @@ const sendTokenResponse = (user, statusCode, res) => {
         id: user._id,
         email: user.email,
         fullName: user.fullName,
+        phoneNumber: user.phoneNumber,
+        userType: user.userType,
         district: user.district,
         age: user.age,
         role: user.role
