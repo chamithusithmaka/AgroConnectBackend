@@ -22,6 +22,7 @@ app.use(cookieParser());
 // Mount routes
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes); // Add this line
+app.use('/api/products', require('./routes/productRoutes')); // Product routes
 
 // Example route
 app.get("/", (req, res) => {
