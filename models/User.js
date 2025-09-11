@@ -19,7 +19,7 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Phone number is required'],
     unique: true,
-    match: [/^\+?[1-9]\d{1,14}$/, 'Please provide a valid phone number'] // Basic international phone validation
+    //match: [/^\+?[1-9]\d{1,14}$/, 'Please provide a valid phone number'] // Basic international phone validation
   },
   password: {
     type: String,
