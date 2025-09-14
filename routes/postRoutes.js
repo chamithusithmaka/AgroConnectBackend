@@ -44,13 +44,13 @@ router.route('/:id')
 // @route   PUT http://localhost:5000/api/posts/:id/like
 // @desc    Like or unlike a post
 // @access  Private
-router.put('/:id/like', protect, likePost);
+router.put('/:id/like', likePost); // Remove 'protect'
 
 // @route   POST http://localhost:5000/api/posts/:id/comments
 // @desc    Add comment to a post
 // @access  Private
 router.route('/:id/comments')
-  .post(protect, addComment);
+  .post(addComment);
 
 // @route   DELETE http://localhost:5000/api/posts/:id/comments/:commentId
 // @desc    Delete comment from a post

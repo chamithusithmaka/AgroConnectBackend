@@ -8,6 +8,7 @@ const cookieParser = require('cookie-parser');
 // Route files
 const authRoutes = require('./routes/authRoutes');
 const postRoutes = require('./routes/postRoutes'); // Add this line
+const storyRoutes = require('./routes/storyRoutes');
 
 dotenv.config(); // Load .env file
 connectDB(); // Connect to database
@@ -23,6 +24,7 @@ app.use(cookieParser());
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes); // Add this line
 app.use('/api/products', require('./routes/productRoutes')); // Product routes
+app.use('/api/stories', storyRoutes);
 
 // Example route
 app.get("/", (req, res) => {

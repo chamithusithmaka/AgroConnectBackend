@@ -2,8 +2,7 @@ const mongoose = require('mongoose');
 
 const CommentSchema = new mongoose.Schema({
   user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    type: String, // Changed from ObjectId to String
     required: true
   },
   text: {
@@ -18,8 +17,7 @@ const CommentSchema = new mongoose.Schema({
 
 const PostSchema = new mongoose.Schema({
   user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    type: String, // Changed from ObjectId to String
     required: true
   },
   heading: {
@@ -33,7 +31,7 @@ const PostSchema = new mongoose.Schema({
     required: [true, 'Please add a description']
   },
   image: {
-    type: String, // Base64 encoded string
+    type: String,
     required: [true, 'Please add an image']
   },
   status: {
@@ -43,8 +41,7 @@ const PostSchema = new mongoose.Schema({
   },
   likes: [
     {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+      type: String // Changed from ObjectId to String
     }
   ],
   comments: [CommentSchema],

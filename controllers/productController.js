@@ -5,25 +5,31 @@ const Product = require('../models/Product');
 // @access  Public
 exports.createProduct = async (req, res) => {
   try {
-    const { name, description, location, price, contact, image } = req.body;
+    const { name, description, location, price, contact, image, UserId } = req.body;
 
-    if (!name || !description || !price || !contact || !image || !req.body.user) {
+    // Check if all required fields are provided
+    if (!name || !description || !price || !contact || !image || !UserId) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide name, description, price, contact, image, and user ID',
+        message: 'Please provide name, description, price, contact, image, and UserId',
       });
     }
 
-    const product = await Product.create({
+    // Create a new product document
+    const product = new Product({
       name,
       description,
       location,
       price,
       contact,
       image,
-      user: req.body.user, // Associate product with user ID
+      UserId,  // Use UserId (uppercase) to match the schema
     });
 
+    // Save the product to the database
+    await product.save();
+
+    // Send response with the newly created product
     res.status(201).json({
       success: true,
       data: product,
@@ -37,15 +43,17 @@ exports.createProduct = async (req, res) => {
     });
   }
 };
-
 // @desc    Get all products
 // @route   GET /api/products
 // @access  Public
 exports.getProducts = async (req, res) => {
   try {
-    const products = await Product.find().populate('user', 'fullName email'); // Populate user details
+    // Remove the populate since UserId is a String, not a reference
+    const products = await Product.find();
+    
     res.status(200).json({
       success: true,
+      count: products.length,
       data: products,
     });
   } catch (error) {
@@ -57,6 +65,7 @@ exports.getProducts = async (req, res) => {
     });
   }
 };
+
 
 // @desc    Get single product
 // @route   GET /api/products/:id

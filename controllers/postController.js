@@ -23,10 +23,9 @@ exports.createPost = async (req, res) => {
       heading,
       description,
       image,
-      // Add category and location if present
       ...(category && { category }),
       ...(location && { location }),
-      // Remove: user: req.user.id,
+      user: req.body.user, // <-- Add this line!
     };
 
     // Create post
@@ -51,80 +50,13 @@ exports.createPost = async (req, res) => {
 // @access  Public
 exports.getPosts = async (req, res) => {
   try {
-    let query;
+    // Fetch all posts without any filters
+    const posts = await Post.find();
 
-    // Copy req.query
-    const reqQuery = { ...req.query };
-
-    // Fields to exclude
-    const removeFields = ['select', 'sort', 'page', 'limit'];
-
-    // Delete fields from reqQuery
-    removeFields.forEach(param => delete reqQuery[param]);
-
-    // Default to only showing approved posts for regular users
-    if (req.user && req.user.role === 'admin') {
-      // Admin can see all posts or filter by status
-      query = Post.find(reqQuery);
-    } else {
-      // Regular users can only see approved posts
-      query = Post.find({ ...reqQuery, status: 'approved' });
-    }
-
-    // Select specific fields
-    if (req.query.select) {
-      const fields = req.query.select.split(',').join(' ');
-      query = query.select(fields);
-    }
-
-    // Sort
-    if (req.query.sort) {
-      const sortBy = req.query.sort.split(',').join(' ');
-      query = query.sort(sortBy);
-    } else {
-      // Default sort by creation date (newest first)
-      query = query.sort('-createdAt');
-    }
-
-    // Pagination
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 10;
-    const startIndex = (page - 1) * limit;
-    const endIndex = page * limit;
-    const total = await Post.countDocuments();
-
-    query = query.skip(startIndex).limit(limit);
-
-    // Populate user info
-    query = query.populate({
-      path: 'user',
-      select: 'fullName'
-    });
-
-    // Execute query
-    const posts = await query;
-
-    // Pagination result
-    const pagination = {};
-
-    if (endIndex < total) {
-      pagination.next = {
-        page: page + 1,
-        limit
-      };
-    }
-
-    if (startIndex > 0) {
-      pagination.prev = {
-        page: page - 1,
-        limit
-      };
-    }
-
+    // Send the response with the fetched posts
     res.status(200).json({
       success: true,
       count: posts.length,
-      pagination,
       data: posts
     });
   } catch (error) {
@@ -136,6 +68,7 @@ exports.getPosts = async (req, res) => {
     });
   }
 };
+
 
 // @desc    Get single post
 // @route   GET /api/posts/:id
@@ -279,41 +212,27 @@ exports.deletePost = async (req, res) => {
 exports.likePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
-
-    if (!post) {
-      return res.status(404).json({
-        success: false,
-        message: 'Post not found'
-      });
-    }
-
+    
+    // For testing without auth, use a hardcoded user
+    const userId = req.user ? req.user.id : 'demouser';
+    
     // Check if post has already been liked by this user
-    const likedIndex = post.likes.findIndex(
-      like => like.toString() === req.user.id
-    );
-
-    // If already liked, remove the like
+    const likedIndex = post.likes.findIndex(like => like === userId);
+    
+    // Toggle like
     if (likedIndex > -1) {
       post.likes.splice(likedIndex, 1);
-      await post.save();
-      
-      return res.status(200).json({
-        success: true,
-        message: 'Post unliked',
-        likeCount: post.likes.length,
-        liked: false
-      });
+    } else {
+      post.likes.push(userId);
     }
-
-    // Add the like
-    post.likes.unshift(req.user.id);
+    
     await post.save();
-
-    res.status(200).json({
+    
+    return res.status(200).json({
       success: true,
-      message: 'Post liked',
+      message: likedIndex > -1 ? 'Post unliked' : 'Post liked',
       likeCount: post.likes.length,
-      liked: true
+      liked: likedIndex <= -1
     });
   } catch (error) {
     console.error(error);
@@ -331,25 +250,20 @@ exports.likePost = async (req, res) => {
 exports.addComment = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
-
-    if (!post) {
-      return res.status(404).json({
-        success: false,
-        message: 'Post not found'
-      });
-    }
-
+    
+    // For testing without auth, use request body user or default
+    const userId = req.user ? req.user.id : (req.body.user || 'demouser');
+    
     // Create new comment
     const newComment = {
       text: req.body.text,
-      user: req.user.id
+      user: userId
     };
-
+    
     // Add to comments array
     post.comments.unshift(newComment);
-
     await post.save();
-
+    
     res.status(201).json({
       success: true,
       data: post.comments
