@@ -5,7 +5,7 @@ const Story = require('../models/Story');
 // @access  Public
 exports.createStory = async (req, res) => {
   try {
-    const { user, image, caption } = req.body;
+    const { user, image, caption, isBase64 } = req.body;
 
     // Validate input
     if (!user || !image) {
@@ -14,7 +14,13 @@ exports.createStory = async (req, res) => {
         message: 'Please provide user and image'
       });
     }
-
+    
+    // Add debug logging
+    console.log(`Creating story for user: ${user}`);
+    console.log(`Image is base64: ${isBase64}`);
+    console.log(`Image data length: ${image.length} characters`);
+    console.log(`Caption: ${caption || '(no caption)'}`);
+    
     // Create story
     const story = await Story.create({
       user,
@@ -28,7 +34,7 @@ exports.createStory = async (req, res) => {
       data: story
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error creating story:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
@@ -162,6 +168,60 @@ exports.deleteStory = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Story deleted successfully'
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get current user stories and other users' stories
+// @route   GET /api/stories/feed/:userId
+// @access  Public
+exports.getStoriesFeed = async (req, res) => {
+  try {
+    const currentUserId = req.params.userId;
+    
+    // Get all stories created in the last 24 hours
+    const stories = await Story.find()
+      .sort({ createdAt: -1 }); // Most recent first
+
+    // Group stories by user
+    const groupedStories = stories.reduce((acc, story) => {
+      const userId = story.user;
+      if (!acc[userId]) {
+        acc[userId] = [];
+      }
+      acc[userId].push(story);
+      return acc;
+    }, {});
+
+    // Separate current user's stories
+    const currentUserStories = groupedStories[currentUserId] || [];
+    delete groupedStories[currentUserId];
+    
+    // Convert other users to array format
+    const otherUsers = Object.keys(groupedStories).map(userId => ({
+      user: userId,
+      stories: groupedStories[userId]
+    }));
+    
+    // Result with current user stories separate
+    const result = {
+      currentUser: {
+        user: currentUserId,
+        stories: currentUserStories
+      },
+      otherUsers: otherUsers
+    };
+
+    res.status(200).json({
+      success: true,
+      data: result
     });
   } catch (error) {
     console.error(error);

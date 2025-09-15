@@ -4,7 +4,8 @@ const {
   getStories,
   getUserStories,
   viewStory,
-  deleteStory
+  deleteStory,
+  getStoriesFeed
 } = require('../controllers/storyController');
 
 const router = express.Router();
@@ -28,5 +29,9 @@ router.put('/:id/view', viewStory);
 // @route   DELETE /api/stories/:id
 // @desc    Delete a story
 router.delete('/:id', deleteStory);
+
+// @route   GET /api/stories/feed/:userId
+// @desc    Get current user stories and other users' stories
+router.get('/feed/:userId', getStoriesFeed);
 
 module.exports = router;
