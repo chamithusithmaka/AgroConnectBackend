@@ -5,44 +5,55 @@ const Product = require('../models/Product');
 // @access  Public
 exports.createProduct = async (req, res) => {
   try {
-    const { name, description, location, price, contact, image, UserId } = req.body;
+    const { 
+      name, 
+      description, 
+      price, 
+      quantity, 
+      category, 
+      image, 
+      isBase64, 
+      seller 
+    } = req.body;
 
-    // Check if all required fields are provided
-    if (!name || !description || !price || !contact || !image || !UserId) {
+    // Validate required fields
+    if (!name || !description || !price || !seller) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide name, description, price, contact, image, and UserId',
+        message: 'Please provide all required fields'
       });
     }
 
-    // Create a new product document
-    const product = new Product({
+    // Log for debugging
+    console.log(`Creating product: ${name}`);
+    console.log(`Image is base64: ${isBase64}`);
+    console.log(`Image data length: ${image ? image.length : 0} characters`);
+
+    // Create and save product
+    const product = await Product.create({
       name,
       description,
-      location,
       price,
-      contact,
-      image,
-      UserId,  // Use UserId (uppercase) to match the schema
+      quantity: quantity || 1,
+      category: category || 'Other',
+      image: image || '',
+      seller
     });
 
-    // Save the product to the database
-    await product.save();
-
-    // Send response with the newly created product
     res.status(201).json({
       success: true,
-      data: product,
+      data: product
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error creating product:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
-      error: error.message,
+      error: error.message
     });
   }
 };
+
 // @desc    Get all products
 // @route   GET /api/products
 // @access  Public
