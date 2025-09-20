@@ -1,9 +1,8 @@
 const mongoose = require('mongoose');
-const User = require('./User');
 
 const ProductSchema = new mongoose.Schema({
-  UserId: {
-    type:String,
+  seller: { // Changed from UserId to seller
+    type: String,
     required: true
   },
   name: {
@@ -16,7 +15,7 @@ const ProductSchema = new mongoose.Schema({
     required: [true, 'Product description is required'],
     trim: true,
   },
-  location: {
+  category: { // Added category field
     type: String,
     trim: true,
   },
@@ -24,9 +23,9 @@ const ProductSchema = new mongoose.Schema({
     type: Number,
     required: [true, 'Product price is required'],
   },
-  contact: {
-    type: String,
-    required: [true, 'Contact number is required'],
+  quantity: { // Added quantity field
+    type: Number,
+    required: [true, 'Product quantity is required'],
   },
   image: {
     type: String, // Base64 string or image URL

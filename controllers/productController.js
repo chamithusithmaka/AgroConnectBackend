@@ -17,35 +17,43 @@ exports.createProduct = async (req, res) => {
     } = req.body;
 
     // Validate required fields
-    if (!name || !description || !price || !seller) {
+    if (!name || !description || !price || !seller || !image) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide all required fields'
+        message: 'Please provide all required fields (name, description, price, seller, image)'
       });
     }
 
     // Log for debugging
-    console.log(`Creating product: ${name}`);
+    console.log('=== Creating Product ===');
+    console.log(`Product name: ${name}`);
+    console.log(`Seller: ${seller}`);
     console.log(`Image is base64: ${isBase64}`);
-    console.log(`Image data length: ${image ? image.length : 0} characters`);
+    console.log(`Image length: ${image ? image.length : 0} characters`);
+    if (image && image.length > 50) {
+      console.log(`Image preview: ${image.substring(0, 50)}...`);
+    }
+    console.log('========================');
 
     // Create and save product
     const product = await Product.create({
-      name,
-      description,
-      price,
-      quantity: quantity || 1,
-      category: category || 'Other',
-      image: image || '',
-      seller
+      name: name.trim(),
+      description: description.trim(),
+      price: parseFloat(price),
+      quantity: parseInt(quantity) || 1,
+      category: category ? category.trim() : 'Other',
+      image: image, // Store the base64 image as-is
+      seller: seller.trim()
     });
+
+    console.log(`✅ Product created successfully with ID: ${product._id}`);
 
     res.status(201).json({
       success: true,
       data: product
     });
   } catch (error) {
-    console.error('Error creating product:', error);
+    console.error('❌ Error creating product:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
@@ -59,8 +67,18 @@ exports.createProduct = async (req, res) => {
 // @access  Public
 exports.getProducts = async (req, res) => {
   try {
-    // Remove the populate since UserId is a String, not a reference
-    const products = await Product.find();
+    const products = await Product.find().sort({ createdAt: -1 });
+    
+    console.log(`📦 Found ${products.length} products`);
+    
+    // Log first product for debugging
+    if (products.length > 0) {
+      const firstProduct = products[0];
+      console.log('First product debug:');
+      console.log(`- Name: ${firstProduct.name}`);
+      console.log(`- Seller: ${firstProduct.seller}`);
+      console.log(`- Image length: ${firstProduct.image ? firstProduct.image.length : 0}`);
+    }
     
     res.status(200).json({
       success: true,
@@ -68,7 +86,7 @@ exports.getProducts = async (req, res) => {
       data: products,
     });
   } catch (error) {
-    console.error(error);
+    console.error('❌ Error fetching products:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
@@ -77,13 +95,12 @@ exports.getProducts = async (req, res) => {
   }
 };
 
-
 // @desc    Get single product
 // @route   GET /api/products/:id
 // @access  Public
 exports.getProduct = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id).populate('user', 'fullName email'); // Populate user details
+    const product = await Product.findById(req.params.id);
 
     if (!product) {
       return res.status(404).json({
@@ -122,7 +139,7 @@ exports.deleteProduct = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Product deleted successfully',
+      message: 'Product removed',
     });
   } catch (error) {
     console.error(error);
