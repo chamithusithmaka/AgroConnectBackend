@@ -24,7 +24,7 @@ const PostSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please add a heading'],
     trim: true,
-    maxlength: [100, 'Heading cannot be more than 100 characters']
+    maxlength: [10000, 'Heading cannot be more than 100 characters']
   },
   description: {
     type: String,
